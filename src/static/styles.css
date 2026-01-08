@@ -158,9 +158,9 @@ footer {
 }
 
 .participants-list {
-  list-style: disc inside;
+  list-style: none; /* hide bullet points */
   margin: 0;
-  padding-left: 18px;
+  padding-left: 0;
 }
 
 .participants-list li {
@@ -168,6 +168,25 @@ footer {
   font-size: 14px;
   color: #333;
   background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Delete button next to each participant */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  line-height: 1;
+}
+
+.delete-btn:hover {
+  color: #b71c1c;
 }
 
 /* Small helper for empty participants */

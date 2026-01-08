@@ -46,7 +46,40 @@ document.addEventListener("DOMContentLoaded", () => {
         ul.className = "participants-list";
         activity.participants.forEach((email) => {
           const li = document.createElement("li");
-          li.textContent = email;
+          li.className = "participant-item";
+
+          const span = document.createElement("span");
+          span.textContent = email;
+
+          const btn = document.createElement("button");
+          btn.className = "delete-btn";
+          btn.title = "Remove participant";
+          btn.setAttribute("aria-label", `Remove ${email} from ${name}`);
+          btn.textContent = "✖";
+
+          btn.addEventListener("click", () => {
+            fetch(`/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(email)}`, {
+              method: "DELETE",
+            })
+              .then(async (res) => {
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  throw new Error(err.detail || "Failed to remove participant");
+                }
+                return res.json();
+              })
+              .then((result) => {
+                // Refresh activities from server and re-render
+                fetchActivities();
+                showMessage(result.message, "success");
+              })
+              .catch((err) => {
+                showMessage(err.message || "Could not remove participant", "error");
+              });
+          });
+
+          li.appendChild(span);
+          li.appendChild(btn);
           ul.appendChild(li);
         });
         participantsSection.appendChild(ul);
@@ -79,19 +112,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Fetch activities from API
-  fetch("/activities")
-    .then((res) => {
-      if (!res.ok) throw new Error("Failed to load activities");
-      return res.json();
-    })
-    .then((data) => {
-      activitiesData = data;
-      renderActivities();
-      populateSelect();
-    })
-    .catch(() => {
-      activitiesList.innerHTML = '<p class="error">Could not load activities. Try reloading the page.</p>';
-    });
+  function fetchActivities() {
+    fetch("/activities")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load activities");
+        return res.json();
+      })
+      .then((data) => {
+        activitiesData = data;
+        renderActivities();
+        populateSelect();
+      })
+      .catch(() => {
+        activitiesList.innerHTML = '<p class="error">Could not load activities. Try reloading the page.</p>';
+      });
+  }
+
+  // Initial load
+  fetchActivities();
 
   // Handle form submission for signing up
   signupForm.addEventListener("submit", (event) => {
@@ -116,11 +154,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return res.json();
       })
       .then((result) => {
-        // Update local state and re-render
-        if (!activitiesData[activityName].participants.includes(email)) {
-          activitiesData[activityName].participants.push(email);
-        }
-        renderActivities();
+        // Refresh activities from server and re-render
+        fetchActivities();
         showMessage(result.message, "success");
         signupForm.reset();
       })
